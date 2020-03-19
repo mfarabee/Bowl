@@ -1,5 +1,4 @@
 # Written by Mike Farabee 2/24/2020
-VERSION=0.5
 import sys
 import math
 import struct
@@ -21,6 +20,7 @@ try:
 except:
     from tkinter import ttk
 
+VERSION="1.0.0"
 
 InputData={
     'units':'in',
@@ -85,7 +85,7 @@ def Starting(units, diameter, depth, zSafety, roughCut, finishCut, feed,
     global lineNum
     global VERSION
 
-    print("(Bowl Cutter By Mike Farabee Version:%3.1f)"%(VERSION))
+    print("(Bowl Cutter By Mike Farabee Version:%s)"%(VERSION))
     print("(Units:%s Diameter:%5.4f Depth:%5.4f Rough:%5.4f Finish:%5.4f)"%(units,diameter,depth,roughCut,finishCut))
     print("(Spindle:%d Feed:%d Cutter Diameter:%5.4f)"%(spindleSpeed,feed,cutterDiameter))
     if units == "in":
