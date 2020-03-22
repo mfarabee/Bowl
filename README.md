@@ -1,5 +1,5 @@
 # Bowl
- This program will generate Gcode to cut a bowl into a flat surface/
+ This program will generate Gcode to cut a bowl into a flat surface.
  You can specify the depth of the bowl as well as the diameter at the surface.
  It is assumed that a round nose cutter is being used.
  
