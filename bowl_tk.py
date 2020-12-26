@@ -20,7 +20,7 @@ try:
 except:
     from tkinter import ttk
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 
 InputData={
     'units':'in',
@@ -29,9 +29,10 @@ InputData={
     'zSafety':0.50,
     'roughCut':0.25,
     'finishCut':0.1,
-    'roughStep':100,
+    'roughStep':25,
     'finishStep':5,
-    'feed':100,
+    'r_feed':100,
+    'f_feed':100,
     'spindleSpeed':6000,
     'cutterDiameter':0.5,
     'enableCoolant':1,
@@ -53,7 +54,8 @@ lineInc=5
 def convert():
     global InputData
     if InputData['units'].get() == 'in':
-        InputData['feed'].set(round(float(InputData['feed'].get())/25.4,5))
+        InputData['r_feed'].set(round(float(InputData['r_feed'].get())/25.4,5))
+        InputData['f_feed'].set(round(float(InputData['f_feed'].get())/25.4,5))
         InputData['diameter'].set(round(float(InputData['diameter'].get())/25.4,5))
         InputData['depth'].set(round(float(InputData['depth'].get())/25.4,5))
         InputData['zSafety'].set(round(float(InputData['zSafety'].get())/25.4,5))
@@ -61,7 +63,8 @@ def convert():
         InputData['finishCut'].set(round(float(InputData['finishCut'].get())/25.4,5))
         InputData['cutterDiameter'].set(round(float(InputData['cutterDiameter'].get())/25.4,5))
     else:
-        InputData['feed'].set(round(float(InputData['feed'].get())*25.4,5))
+        InputData['r_feed'].set(round(float(InputData['r_feed'].get())*25.4,5))
+        InputData['f_feed'].set(round(float(InputData['f_feed'].get())*25.4,5))
         InputData['diameter'].set(round(float(InputData['diameter'].get())*25.4,5))
         InputData['depth'].set(round(float(InputData['depth'].get())*25.4,5))
         InputData['zSafety'].set(round(float(InputData['zSafety'].get())*25.4,5))
@@ -79,7 +82,7 @@ def openDirectory(valueHash):
         if tmp != None:
             valueHash["outdir"].set(tmp)
 
-def Starting(units, diameter, depth, zSafety, roughCut, finishCut, feed,
+def Starting(units, diameter, depth, zSafety, roughCut, finishCut, r_feed, f_feed,
     spindleSpeed, cutterDiameter, enableCoolant, outfile):
     global lineInc
     global lineNum
@@ -87,7 +90,7 @@ def Starting(units, diameter, depth, zSafety, roughCut, finishCut, feed,
 
     print("(Bowl Cutter By Mike Farabee Version:%s)"%(VERSION))
     print("(Units:%s Diameter:%5.4f Depth:%5.4f Rough:%5.4f Finish:%5.4f)"%(units,diameter,depth,roughCut,finishCut))
-    print("(Spindle:%d Feed:%d Cutter Diameter:%5.4f)"%(spindleSpeed,feed,cutterDiameter))
+    print("(Spindle:%d Rough Feed:%d Finish Feed:%d Cutter Diameter:%5.4f)"%(spindleSpeed,r_feed,f_feed,cutterDiameter))
     if units == "in":
         print("N%d G20 (Inch)"%(lineNum))
     else:
@@ -114,7 +117,7 @@ def Starting(units, diameter, depth, zSafety, roughCut, finishCut, feed,
         lineNum=lineNum+lineInc
     print("N%d G18 (ZX plane)"%(lineNum))
     lineNum=lineNum+lineInc
-    print("N%d G0 Z%5.4f F%5.2f (Set Feed Rate and Inital Height)"%(lineNum,depth+zSafety,feed))
+    print("N%d G0 Z%5.4f F%5.2f (Set Feed Rate and Inital Height)"%(lineNum,depth+zSafety,r_feed))
     lineNum=lineNum+lineInc
     print("")
     lineNum=lineNum+lineInc
@@ -154,12 +157,13 @@ def createLabelEntry(parentFrame,labelName,varHash,varKey,varDefault):
 
 
 def createGcode(units, diameter, depth, zSafety, roughCut, finishCut, roughStep, finishStep,
-    feed,spindleSpeed, cutterDiameter, enableCoolant, outfile):
+    r_feed,f_feed,spindleSpeed, cutterDiameter, enableCoolant, outfile):
     global lineInc
     global lineNum
     cuts=[]
     lineNum=100
     originalStdout=""
+    isFinishCut =0
 
     if outfile != "":
         originalStdout = sys.stdout
@@ -170,10 +174,15 @@ def createGcode(units, diameter, depth, zSafety, roughCut, finishCut, roughStep,
     zSafety=float(zSafety)
     roughCut=float(roughCut)
     finishCut=float(finishCut)
-    feed=float(feed)
+    r_feed=float(r_feed)
+    f_feed=float(f_feed)
     spindleSpeed=int(spindleSpeed)
     cutterDiameter=float(cutterDiameter)
     enableCoolant=int(enableCoolant)
+    if float(roughStep) < 0.0001 or float(roughStep) >100.0:
+        roughStep=100
+    if float(finishStep) < 0.0001 or float(roughStep) > 100:
+        finishStep=100
     roughStep=cutterDiameter*(float(roughStep)/100)
     finishStep=cutterDiameter*(float(finishStep)/100)
 
@@ -182,16 +191,20 @@ def createGcode(units, diameter, depth, zSafety, roughCut, finishCut, roughStep,
     #radiusOffset= radius-depth
 
     #Create Cut Depth List
-    result=depth-roughCut
-    while result>finishCut:
-        cuts.append(depth-result)
-        result=result-roughCut
-    result=result+roughCut
-    if result >finishCut:
-        cuts.append(depth-finishCut)
+    result = depth   # initalize result, just in case roughCut is zero
+    if roughCut>0.00001:
+        result=depth-roughCut
+        while result>finishCut:
+            cuts.append(depth-result)
+            result=result-roughCut
+        result=result+roughCut
+        # do one more rough cut if leftover is more than finish cut
+    if result > finishCut and finishCut >0.00001: 
+       cuts.append(depth-finishCut)
+    # do finish cut
     cuts.append(depth)
 
-    Starting(units, diameter, depth, zSafety, roughCut, finishCut, feed,
+    Starting(units, diameter, depth, zSafety, roughCut, finishCut, r_feed, f_feed,
         spindleSpeed, cutterDiameter, enableCoolant, outfile)
 
     for incDepth in (cuts):
@@ -201,10 +214,15 @@ def createGcode(units, diameter, depth, zSafety, roughCut, finishCut, roughStep,
         incDia=math.sqrt((8*incDepth*radius) - (incDepth*incDepth*4))
         halfDia=incDia/2.0
         radiusOffset=radius-incDepth
-        if (depth-incDepth)<0.001:
+        # is this the last one
+        if (depth-incDepth)<0.0001 and finishCut >0.0001:
             stepSize=finishStep
+            isFinishCut =1
+            feedValue=f_feed
         else:
             stepSize=roughStep
+            isFinishCut =0
+            feedValue=r_feed
 
 
         # Start at top, calculate the width and step
@@ -212,8 +230,11 @@ def createGcode(units, diameter, depth, zSafety, roughCut, finishCut, roughStep,
             #aR=math.radians(a)
         y=halfDia-stepSize
         x=math.sqrt((halfDia*halfDia)-(y*y))
-        print("(Depth=%5.4f  Diameter: %5.4f  Step:%5.4f)"%(incDepth,incDia+(cutterDiameter/2.0),stepSize))
-        print("N%d G0 X-%5.4f Y%5.4f Z%5.4f"%(lineNum,x,y,zSafety))
+        print("(Depth=%5.4f  Diameter: %5.4f  Step:%5.4f Feed:%5.2f)"%(incDepth,incDia+(cutterDiameter/2.0),stepSize,feedValue))
+        if isFinishCut ==0:
+            print("N%d G0 X-%5.4f Y%5.4f Z%5.4f"%(lineNum,x,y,zSafety))
+        else:
+            print("N%d G0 X-%5.4f Y%5.4f Z%5.4f F%5.2f"%(lineNum,x,y,zSafety,f_feed))
         lineNum=lineNum+lineInc
         inc=0
         prevX=0
@@ -315,10 +336,16 @@ frame["Spindle"]=createLabelEntry(frame["Machine"],"Spindle Speed",
         InputData,"spindleSpeed",InputData["spindleSpeed"])
 Label(frame["Spindle"],text="rpm").pack(side="left")
 
-frame["Feed"]=createLabelEntry(frame["Machine"],"Feed Rate",
-        InputData,"feed",InputData["feed"])
-Label(frame["Feed"],textvariable=InputData['units']).pack(side="left")
-Label(frame["Feed"],text="/min").pack(side="left")
+frame["RFeed"]=createLabelEntry(frame["Machine"],"Rough Feed Rate",
+        InputData,"r_feed",InputData["r_feed"])
+Label(frame["RFeed"],textvariable=InputData['units']).pack(side="left")
+Label(frame["RFeed"],text="/min").pack(side="left")
+
+frame["FFeed"]=createLabelEntry(frame["Machine"],"Finish Feed Rate",
+        InputData,"f_feed",InputData["f_feed"])
+Label(frame["FFeed"],textvariable=InputData['units']).pack(side="left")
+Label(frame["FFeed"],text="/min").pack(side="left")
+
 
 frame["bowl"]=LabelFrame(frame["body"],bd=2,text="Bowl Dimensions")
 frame["bowl"].pack(side="top",fill="x",anchor="ne")
@@ -370,7 +397,8 @@ applyButton2=Button(buttonFrame2,
         InputData['finishCut'].get(),
         InputData['roughStep'].get(),
         InputData['finishStep'].get(),
-        InputData['feed'].get(),
+        InputData['r_feed'].get(),
+        InputData['f_feed'].get(),
         InputData['spindleSpeed'].get(),
         InputData['cutterDiameter'].get(),
         InputData['enableCoolant'].get(),
