@@ -18,10 +18,8 @@
 - Finish Feed Rate
 	Feed rate for finishing cuts
 - Bowl 
-	- Diameter
-		Diameter to bowl
-	- Depth
-		Depth of bowl (assumes to of bowl is at Z=0.0)
+	- Diameter: Diameter to bowl
+	- Depth: Depth of bowl (assumes to of bowl is at Z=0.0)
 - Tool 
 	- Diameter: Diameter of round nose cutter
 	- Rough Cut:  Depth for roughing passes 
