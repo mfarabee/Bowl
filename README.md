@@ -23,20 +23,15 @@
 	- Depth
 		Depth of bowl (assumes to of bowl is at Z=0.0)
 - Tool 
-	- Diameter
-		Diameter of round nose cutter
-	- Rough Cut 
-		Depth for roughing passes 
-	- Finish Cut 
-		Depth for final finish pass. If set to "0", no finish pass
-		will take place.
-	- Rough Step 
-		Distance the cutter will move within a pass as a
+	- Diameter: Diameter of round nose cutter
+	- Rough Cut:  Depth for roughing passes 
+	- Finish Cut:  Depth for final finish pass. 
+		If set to "0", no finish pass will take place.
+	- Rough Step:  Distance the cutter will move within a pass as a
 		% of tool diameter. 50% would move the tool half the
 		tool diameter for each step during each roughing pass.
 		1-100% are valid inputs.
-	- Finish Step 
-		Distance the cutter will move within a pass as a
+	- Finish Step:  Distance the cutter will move within a pass as a
 		% of tool diameter. 50% would move the tool half the
 		tool diameter for each step during the finishing pass.
 		1-100% are valid inputs.
