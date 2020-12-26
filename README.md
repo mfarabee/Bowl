@@ -8,15 +8,12 @@
  The gcode generated will use G2 and G3 commands on the XZ plane, cutting multiple passes 
  based on the rough and finish depths specified.
 
-- Z Safety
-	Distance the cutter will move in "Z" to clear work surface before making rapid moves
+- Z Safety: Distance the cutter will move in "Z" to 
+            clear work surface before making rapid moves
 
-- Spindle Speed
-	Speed of spindle (performs M03 command, Spindle on CW @ speed specified)
-- Rough Feed Rate
-	Feed rate for roughing cuts
-- Finish Feed Rate
-	Feed rate for finishing cuts
+- Spindle Speed: Speed of spindle (performs M03 command, Spindle on CW @ speed specified)
+- Rough Feed Rate: Feed rate for roughing cuts
+- Finish Feed Rate: Feed rate for finishing cuts
 - Bowl 
 	- Diameter: Diameter to bowl
 	- Depth: Depth of bowl (assumes to of bowl is at Z=0.0)
